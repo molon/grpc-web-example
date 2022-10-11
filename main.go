@@ -72,6 +72,7 @@ func (*server) Echo(ctx context.Context, in *echov1.EchoRequest) (*echov1.EchoRe
 		Message: in.GetMessage(),
 	}, nil
 }
+
 func (*server) ServerStreamingEcho(in *echov1.ServerStreamingEchoRequest, stream echov1.EchoService_ServerStreamingEchoServer) error {
 	ticker := time.NewTicker(time.Duration(in.GetMessageInterval()) * time.Millisecond)
 	defer ticker.Stop()
