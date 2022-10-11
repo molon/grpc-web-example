@@ -3,6 +3,8 @@ module github.com/molon/grpc-web-example
 go 1.19
 
 require (
+	github.com/improbable-eng/grpc-web v0.15.0
+	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.13.0
 	google.golang.org/grpc v1.46.2
@@ -15,7 +17,6 @@ require (
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/improbable-eng/grpc-web v0.15.0 // indirect
 	github.com/klauspost/compress v1.11.7 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
