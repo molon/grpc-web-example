@@ -33,12 +33,16 @@ func run() error {
 			return true
 		}),
 	)
-	serveMux := http.NewServeMux()
-	serveMux.Handle("/", wrappedGrpc)
 	httpServer := &http.Server{
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
-		Handler:      serveMux,
+		Handler: http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			if wrappedGrpc.IsGrpcWebRequest(req) {
+				wrappedGrpc.ServeHTTP(resp, req)
+				return
+			}
+			http.DefaultServeMux.ServeHTTP(resp, req)
+		}),
 	}
 
 	httpListener, err := net.Listen("tcp", viper.GetString("grpcweb.address"))
