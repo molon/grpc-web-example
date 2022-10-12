@@ -17,6 +17,7 @@ import (
 	"github.com/mwitkow/go-conntrack/connhelpers"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -27,6 +28,10 @@ func main() {
 
 func run() error {
 	grpcServer := grpc.NewServer()
+	if viper.GetBool("grpc.reflection") {
+		reflection.Register(grpcServer)
+	}
+
 	echov1.RegisterEchoServiceServer(grpcServer, &server{})
 	wrappedGrpc := grpcweb.WrapServer(grpcServer,
 		grpcweb.WithOriginFunc(func(origin string) bool {
@@ -47,9 +52,18 @@ func run() error {
 		}),
 	}
 
-	httpListener, err := net.Listen("tcp", viper.GetString("grpcweb.address"))
+	httpListener, err := net.Listen("tcp", viper.GetString("http.address"))
 	if err != nil {
 		return err
+	}
+	var grpcListener net.Listener
+	if viper.GetString("grpc.address") != viper.GetString("http.address") {
+		grpcListener, err = net.Listen("tcp", viper.GetString("grpc.address"))
+		if err != nil {
+			return err
+		}
+	} else {
+		grpcListener = httpListener
 	}
 
 	if viper.GetBool("tls") {
@@ -58,17 +72,39 @@ func run() error {
 			return err
 		}
 		httpListener = tls.NewListener(httpListener, tlsConfig)
+		grpcListener = tls.NewListener(grpcListener, tlsConfig)
 	}
 
 	doneC := make(chan error, 1)
+	defer func() {
+		grpcServer.GracefulStop()
+		log.Println("[grpc] stopped")
+	}()
 	go func() {
 		if viper.GetBool("tls") {
-			log.Printf("listening tls on: %v", httpListener.Addr().String())
+			log.Printf("[grpc] listening tls on: %v", grpcListener.Addr().String())
 		} else {
-			log.Printf("listening on: %v", httpListener.Addr().String())
+			log.Printf("[grpc] listening on: %v", grpcListener.Addr().String())
+		}
+		if err := grpcServer.Serve(grpcListener); err != nil {
+			doneC <- fmt.Errorf("[grpc] error: %w", err)
+		}
+	}()
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		httpServer.Shutdown(ctx)
+		httpServer.Close()
+		log.Println("[http] closed")
+	}()
+	go func() {
+		if viper.GetBool("tls") {
+			log.Printf("[http] listening tls on: %v", httpListener.Addr().String())
+		} else {
+			log.Printf("[http] listening on: %v", httpListener.Addr().String())
 		}
 		if err := httpServer.Serve(httpListener); err != nil {
-			doneC <- fmt.Errorf("server error: %w", err)
+			doneC <- fmt.Errorf("[http] error: %w", err)
 		}
 	}()
 
