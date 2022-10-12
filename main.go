@@ -52,18 +52,13 @@ func run() error {
 		}),
 	}
 
-	httpListener, err := net.Listen("tcp", viper.GetString("http.address"))
+	grpcListener, err := net.Listen("tcp", viper.GetString("grpc.address"))
 	if err != nil {
 		return err
 	}
-	var grpcListener net.Listener
-	if viper.GetString("grpc.address") != viper.GetString("http.address") {
-		grpcListener, err = net.Listen("tcp", viper.GetString("grpc.address"))
-		if err != nil {
-			return err
-		}
-	} else {
-		grpcListener = httpListener
+	httpListener, err := net.Listen("tcp", viper.GetString("http.address"))
+	if err != nil {
+		return err
 	}
 
 	if viper.GetBool("tls") {

@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	_ = pflag.String("grpc.address", "127.0.0.1:8080", "grpc address")
+	_ = pflag.String("grpc.address", "127.0.0.1:9090", "grpc address")
 	_ = pflag.Bool("grpc.reflection", true, "")
 	_ = pflag.String("http.address", "127.0.0.1:8080", "http address(grpcweb)")
 	_ = pflag.Bool("tls", false, "whether to run TLS server")
