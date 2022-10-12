@@ -37,7 +37,9 @@ func run() error {
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
 		Handler: http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			if wrappedGrpc.IsGrpcWebRequest(req) {
+			log.Printf("req: %v", req.URL.String())
+			if wrappedGrpc.IsAcceptableGrpcCorsRequest(req) || wrappedGrpc.IsGrpcWebRequest(req) ||
+				wrappedGrpc.IsGrpcWebSocketRequest(req) {
 				wrappedGrpc.ServeHTTP(resp, req)
 				return
 			}
